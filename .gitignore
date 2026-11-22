@@ -1,29 +1,40 @@
 node_modules/
 .env
-.env.local
-.env.production
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.env.*
 .DS_Store
+*.log
+Frontend/.expo/
+Frontend/dist/
+Frontend/web-build/
+Backend/.env
 
 
-# Backend private credentials and signing keys
-secrets/
-*.p8
-*.p12
-*.jks
-*.pem
-*service-account*.json
-firebase-admin*.json
+# Firebase backend keys and local client configuration
+Backend/secrets/
+**/firebase-admin*.json
+**/*service-account*.json
+Frontend/google-services.json
+Frontend/GoogleService-Info.plist
 
+# Private encrypted backup files and local diagnostic tools
 *.zaybackup
 *.backup.enc
 .ops-backups/
+.implement-*.cjs
 
-# Local environments (only sanitized examples belong in source control)
+# Private credentials, generated output and local tooling
 .env*
 !.env.example
+!**/.env.example
+**/secrets/
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+credentials*.json
 .npmrc
 .netrc
 .git-credentials
@@ -31,21 +42,14 @@ firebase-admin*.json
 .vscode/
 .idea/
 coverage/
-*.log
-*.key
-*.keystore
-credentials*.json
-google-services.json
-GoogleService-Info.plist
-
-# Local diagnostics, databases, exports and backups
+*.tsbuildinfo
+**/dist/
+**/web-build/
+**/.expo/
+.portfolio-tools/
+portfolio-screenshots/
+*.zip
 *_RESULTS.json
 *DIAGNOSTIC.json
-check_orders.js
-dump/
-backups/
-*.bson
-*.bson.gz
-*.archive
-*.dump
-*.zip
+Backend/check_orders.js
+/package-lock.json

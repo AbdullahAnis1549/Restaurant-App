@@ -1,4 +1,4 @@
-name: Verify backend
+name: Verify application
 on: [push, pull_request]
 permissions:
   contents: read
@@ -13,6 +13,15 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run security:secrets -- --self-test
+          cache-dependency-path: Backend/package-lock.json
+      - run: npm ci --prefix Backend
+      - run: npm test --prefix Backend
+      - run: npm run security:secrets --prefix Backend -- --self-test
+      - if: hashFiles('Frontend/package-lock.json') != ''
+        run: npm ci --prefix Frontend
+      - if: hashFiles('Frontend/package-lock.json') != ''
+        run: npm test --prefix Frontend
+      - if: hashFiles('Frontend/package-lock.json') != ''
+        run: npm run typecheck --prefix Frontend
+      - if: hashFiles('Frontend/package-lock.json') != ''
+        run: npm run lint --prefix Frontend -- --quiet

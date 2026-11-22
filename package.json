@@ -1,0 +1,54 @@
+{
+  "name": "restaurant-backend",
+  "version": "1.0.0",
+  "description": "Production Restaurant API with MVC, Cloudinary, Multer, Nodemailer & JWT",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/scripts/seed.js",
+    "test:notifications": "node --test test/notifications.test.js",
+    "test:google-auth": "node --test test/google-auth.test.js",
+    "test:payments": "node --test test/payment-flows.test.js test/payment-sheet.test.js",
+    "test:account-sync": "node --test test/customer-state.test.js",
+    "test": "node --test",
+    "security:production": "node scripts/check-production.mjs",
+    "security:atlas": "node scripts/check-atlas.mjs",
+    "security:secrets": "node scripts/scan-secrets.cjs",
+    "backup": "node scripts/backup.mjs",
+    "verify:account-security": "node scripts/verify-account-security.mjs",
+    "verify:backup": "node scripts/verify-backup.mjs"
+  },
+  "keywords": [
+    "restaurant",
+    "express",
+    "mongodb",
+    "cloudinary",
+    "nodemailer"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.5.1",
+    "compression": "^1.8.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^14.5.1",
+    "google-auth-library": "^11.3.4",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^10.6.0",
+    "socket.io": "^4.8.4",
+    "streamifier": "^0.1.1",
+    "stripe": "^23.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "socket.io-client": "^4.8.4"
+  }
+}

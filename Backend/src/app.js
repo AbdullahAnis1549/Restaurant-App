@@ -1,3 +1,4 @@
+import { initializeRuntime } from './config/runtime.js';
 import mongoose from 'mongoose';
 import { responsePrivacy } from './utils/responsePrivacy.js';
 import { corsOrigin } from './utils/originPolicy.js';
@@ -47,6 +48,18 @@ app.use(cors({
 // Security Middleware
 app.use(secureHeaders);
 app.use(responsePrivacy);
+
+// Vercel imports this app directly, bypassing the standalone server bootstrap.
+app.use(async (req, res, next) => {
+  if (!process.env.VERCEL || !req.path.startsWith('/api/') || req.path === '/api/health') return next();
+  try {
+    await initializeRuntime();
+    next();
+  } catch (error) {
+    console.error('[Runtime initialization failed]', error.code || error.name);
+    res.status(503).json({ success: false, message: 'Service temporarily unavailable. Please try again later.' });
+  }
+});
 
 app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 

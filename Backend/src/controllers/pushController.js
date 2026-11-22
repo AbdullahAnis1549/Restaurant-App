@@ -1,3 +1,4 @@
+import { processCampaign } from '../services/notificationCampaigns.js';
 import mongoose from 'mongoose';
 import PushDevice from '../models/PushDevice.js';
 import Campaign from '../models/NotificationCampaign.js';
@@ -38,7 +39,10 @@ export const createCampaign = async (req, res) => {
   const { title, message, audience, userIds, promoId, requestId } = req.body;
   if (typeof title !== 'string' || !title.trim() || title.length > 100 || typeof message !== 'string' || !message.trim() || message.length > 500 || !['all', 'selected'].includes(audience) || typeof requestId !== 'string' || !/^[a-zA-Z0-9_-]{16,100}$/.test(requestId)) return res.status(400).json({ message: 'Title (100 chars), message (500 chars), audience and request ID required.' });
   const existing = await Campaign.findOne({ requestId }).select('-recipients');
-  if (existing) return res.json({ success: true, data: existing });
+  if (existing) {
+   if (process.env.VERCEL && existing.status === 'queued') await processCampaign(existing._id);
+   return res.json({ success: true, data: process.env.VERCEL ? await Campaign.findById(existing._id).select('-recipients') : existing });
+  }
   let ids;
   if (audience === 'selected') {
    if (!Array.isArray(userIds) || !userIds.length || userIds.length > 200 || userIds.some(id => typeof id !== 'string' || !mongoose.isValidObjectId(id))) return res.status(400).json({ message: 'Select between 1 and 200 valid customers.' });
@@ -56,6 +60,11 @@ export const createCampaign = async (req, res) => {
   }
   firebaseMessaging();
   const campaign = await Campaign.create({ title: title.trim(), message: message.trim(), audience, recipients: recipients.map(u => u._id), recipientCount: recipients.length, promo: promo?._id, couponCode: promo?.code || '', requestId, createdBy: req.user._id });
+  if (process.env.VERCEL) {
+   // Await delivery: a background interval is not started by Vercel's app entrypoint.
+   await processCampaign(campaign._id);
+   return res.json({ success: true, data: await Campaign.findById(campaign._id).select('-recipients') });
+  }
   res.status(202).json({ success: true, data: { ...campaign.toObject(), recipients: undefined } });
  } catch (error) { fail(res, error); }
 };

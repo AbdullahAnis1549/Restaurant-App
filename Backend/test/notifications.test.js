@@ -83,3 +83,14 @@ test('delivery batches FCM requests, writes inbox records, prunes invalid tokens
  await deliverCampaign(campaign, messaging);
  assert.deepEqual(batches.map(batch => batch.tokens.length), [500, 1]); assert.equal(inbox, 2); assert.equal(campaign.pushAccepted, 500); assert.equal(campaign.pushFailed, 1); assert.equal(campaign.usersWithoutDevice, 1); assert.equal(campaign.status, 'partial'); assert.deepEqual(pruned, [0]); assert.equal(batches[0].android.notification.channelId, 'promotions'); assert.equal(batches[0].apns.payload.aps.sound, 'default');
 });
+
+test('request-driven campaign delivery atomically claims and never replays sending campaigns', async t => {
+ const { processCampaign } = await import('../src/services/notificationCampaigns.js');
+ let calls = 0, saved = 0;
+ const campaign = { save: async () => { saved++; } };
+ t.mock.method(Campaign, 'findOneAndUpdate', async query => { assert.equal(query.status, 'queued'); return calls++ === 0 ? campaign : null; });
+ let deliveries = 0;
+ await processCampaign(a, async () => { deliveries++; throw new Error('provider unavailable'); });
+ await processCampaign(a, async () => { deliveries++; });
+ assert.equal(deliveries, 1); assert.equal(saved, 1); assert.equal(campaign.status, 'failed');
+});

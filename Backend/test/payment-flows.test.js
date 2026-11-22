@@ -64,3 +64,12 @@ test('webhook rejects invalid signatures and handles verified paid events', asyn
 });
 
 test('payment confirmation cannot reopen an order cancelled during the paid update',async t=>{const current=order();let updates=0;t.mock.method(Order,'findById',async()=>current);t.mock.method(Order,'findOne',async()=>null);t.mock.method(Order,'findOneAndUpdate',async(query,update)=>{updates++;if(updates===1){current.status='Cancelled';return null;}assert.equal(query.status,'Cancelled');assert.equal(update.$set.status,'Cancelled');Object.assign(current,update.$set);return current;});const paid=await markCheckoutPaid(session(),()=>{});assert.equal(paid.status,'Cancelled');assert.equal(paid.isPaid,true);assert.equal(updates,2);});
+
+test('portfolio default rejects live Stripe keys and accepts test keys', async t => {
+ const { getStripe } = await import('../src/controllers/paymentController.js');
+ const before = { key: process.env.STRIPE_SECRET_KEY, mode: process.env.STRIPE_MODE };
+ t.after(() => { for (const [key, value] of [['STRIPE_SECRET_KEY', before.key], ['STRIPE_MODE', before.mode]]) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } });
+ delete process.env.STRIPE_MODE;
+ process.env.STRIPE_SECRET_KEY = 'sk_live_fixture'; assert.equal(getStripe(), null);
+ process.env.STRIPE_SECRET_KEY = 'sk_test_fixture'; assert.ok(getStripe());
+});

@@ -4,6 +4,8 @@ import Notification from '../models/Notification.js';
 import { sendOrderConfirmationEmail } from '../utils/nodemailer.js';
 export const getStripe = () => {
  const key = process.env.STRIPE_SECRET_KEY;
+ // Portfolio deployments accept test keys unless live mode is explicitly enabled.
+ if ((process.env.STRIPE_MODE || 'test') !== 'live' && !key?.startsWith('sk_test_')) return null;
  return key && !key.startsWith('sk_test_placeholder') ? new Stripe(key) : null;
 };
 export async function markCheckoutPaid(session, notify = notifyPayment, attempt = 0) {

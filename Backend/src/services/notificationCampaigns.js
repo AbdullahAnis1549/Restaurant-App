@@ -56,3 +56,16 @@ export async function startCampaignWorker() {
  const timer = setInterval(tick, 2000); timer.unref(); void tick();
  return () => clearInterval(timer);
 }
+
+// Claim atomically so concurrent/replayed admin requests never send twice.
+export async function processCampaign(id, deliver = deliverCampaign) {
+ const campaign = await Campaign.findOneAndUpdate({ _id: id, status: 'queued' }, { $set: { status: 'sending' } }, { new: true });
+ if (!campaign) return;
+ try { await deliver(campaign); }
+ catch (error) {
+  campaign.status = 'failed';
+  campaign.error = 'Delivery interrupted or rejected. Check counts before sending another campaign.';
+  await campaign.save();
+  console.error('[Notification campaign]', error.code || error.name);
+ }
+}

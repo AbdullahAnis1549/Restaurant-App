@@ -64,7 +64,8 @@ export async function processCampaign(id, deliver = deliverCampaign) {
  try { await deliver(campaign); }
  catch (error) {
   campaign.status = 'failed';
-  campaign.error = 'Delivery interrupted or rejected. Check counts before sending another campaign.';
+  const code = typeof error.code === 'string' && /^[a-zA-Z0-9_/-]{1,100}$/.test(error.code) ? error.code : 'provider-error';
+  campaign.error = 'Push delivery failed (' + code + '). Check Firebase credentials on the deployed backend. Some sends may have completed; check counts before retrying.';
   await campaign.save();
   console.error('[Notification campaign]', error.code || error.name);
  }

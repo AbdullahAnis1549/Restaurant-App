@@ -90,7 +90,7 @@ test('request-driven campaign delivery atomically claims and never replays sendi
  const campaign = { save: async () => { saved++; } };
  t.mock.method(Campaign, 'findOneAndUpdate', async query => { assert.equal(query.status, 'queued'); return calls++ === 0 ? campaign : null; });
  let deliveries = 0;
- await processCampaign(a, async () => { deliveries++; throw new Error('provider unavailable'); });
+ await processCampaign(a, async () => { deliveries++; throw Object.assign(new Error('provider unavailable'), { code: 'app/invalid-credential' }); });
  await processCampaign(a, async () => { deliveries++; });
- assert.equal(deliveries, 1); assert.equal(saved, 1); assert.equal(campaign.status, 'failed');
+ assert.equal(deliveries, 1); assert.equal(saved, 1); assert.equal(campaign.status, 'failed'); assert.match(campaign.error, /app\/invalid-credential/); assert.ok(!campaign.error.includes('provider unavailable'));
 });

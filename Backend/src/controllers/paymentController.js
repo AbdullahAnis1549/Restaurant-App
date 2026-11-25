@@ -1,11 +1,12 @@
+import { stripeConfiguration } from '../utils/stripeConfig.js';
 import Stripe from 'stripe';
 import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
 import { sendOrderConfirmationEmail } from '../utils/nodemailer.js';
 export const getStripe = () => {
- const key = process.env.STRIPE_SECRET_KEY;
+ const { secretKey: key, mode } = stripeConfiguration();
  // Portfolio deployments accept test keys unless live mode is explicitly enabled.
- if ((process.env.STRIPE_MODE || 'test') !== 'live' && !key?.startsWith('sk_test_')) return null;
+ if (mode !== 'live' && !key?.startsWith('sk_test_')) return null;
  return key && !key.startsWith('sk_test_placeholder') ? new Stripe(key) : null;
 };
 export async function markCheckoutPaid(session, notify = notifyPayment, attempt = 0) {

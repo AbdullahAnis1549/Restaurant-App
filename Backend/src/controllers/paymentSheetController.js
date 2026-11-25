@@ -1,14 +1,18 @@
+import { stripeConfiguration } from '../utils/stripeConfig.js';
 import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import { getStripe, markCheckoutPaid, markPaymentIntentPaid } from './paymentController.js';
 
-const keyIsCompatible = key => /^pk_(test|live)_/.test(key || '') && key.startsWith(process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'pk_live_' : 'pk_test_');
+const keyIsCompatible = key => /^pk_(test|live)_/.test(key || '') && key.startsWith(stripeConfiguration().secretKey.startsWith('sk_live_') ? 'pk_live_' : 'pk_test_');
 export function createPaymentSheetControllers(stripeFactory = getStripe, confirmIntent = markPaymentIntentPaid, confirmCheckout = markCheckoutPaid) {
  return {
   createPaymentSheet: async (req, res) => {
    try {
-    const stripe = stripeFactory(), publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
-    if (!stripe || !keyIsCompatible(publishableKey)) return res.status(503).json({ message: 'Mobile card payments are not configured. Cash on delivery is available.' });
+    const stripe = stripeFactory(), publishableKey = stripeConfiguration().publishableKey;
+    if (!stripe || !keyIsCompatible(publishableKey)) {
+     if (res.locals) res.locals.safeError = true;
+     return res.status(503).json({ code: 'PAYMENT_CONFIGURATION_MISSING', message: 'Card payment setup is incomplete. The administrator must configure matching Stripe test secret and publishable keys on the server. Cash on delivery is available.' });
+    }
     if (!mongoose.isValidObjectId(req.body.orderId)) return res.status(400).json({ message: 'Valid order required.' });
     const order = await Order.findById(req.body.orderId);
     if (!order) return res.status(404).json({ message: 'Order not found.' });
